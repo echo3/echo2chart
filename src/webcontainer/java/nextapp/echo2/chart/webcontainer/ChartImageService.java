@@ -18,20 +18,40 @@ import nextapp.echo2.webrender.ContentType;
 import nextapp.echo2.webrender.Service;
 import nextapp.echo2.webrender.WebRenderServlet;
 
+/**
+ * <code>Service</code> to render chart images.
+ */
 public class ChartImageService 
 implements Service {
 
     private static final int DEFAULT_WIDTH = 400;
     private static final int DEFAULT_HEIGHT = 300;
     
-    private static final String[] URI_KEYS = {"chartId", "v"}; 
+    /**
+     * Parameter keys used in generating service URI.
+     */
+    private static final String[] URI_PARAMETER_KEYS = {"chartId", "v"}; 
     
+    /**
+     * Returns the appropriate URI to display a chart for a specific 
+     * <code>ChartDisplay</code> component.
+     * 
+     * @param rc the relevant <code>RenderContext</code>
+     * @param chartDisplay the rendering <code>ChartDisplay</code>
+     * @param version the version number of the chart 
+     *        (incremented when chart is re-rendered due to an update)
+     * @return the URI
+     */
     static final String getUri(RenderContext rc, ChartDisplay chartDisplay, int version) {
-        return rc.getContainerInstance().getServiceUri(INSTANCE, URI_KEYS, new String[]{chartDisplay.getRenderId(), 
+        return rc.getContainerInstance().getServiceUri(INSTANCE, URI_PARAMETER_KEYS, new String[]{chartDisplay.getRenderId(), 
                 Integer.toString(version)});
     }
     
+    /**
+     * Singleton instance.
+     */
     private static final ChartImageService INSTANCE = new ChartImageService();
+    
     static {
         WebRenderServlet.getServiceRegistry().add(INSTANCE);
     }
