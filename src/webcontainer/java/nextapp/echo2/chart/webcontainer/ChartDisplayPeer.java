@@ -40,9 +40,15 @@ import nextapp.echo2.chart.app.ChartDisplay;
 import nextapp.echo2.webcontainer.ComponentSynchronizePeer;
 import nextapp.echo2.webcontainer.ContainerInstance;
 import nextapp.echo2.webcontainer.DomUpdateSupport;
+import nextapp.echo2.webcontainer.PartialUpdateManager;
+import nextapp.echo2.webcontainer.PartialUpdateParticipant;
 import nextapp.echo2.webcontainer.RenderContext;
 import nextapp.echo2.webcontainer.RenderState;
+import nextapp.echo2.webrender.ServerMessage;
+import nextapp.echo2.webrender.Service;
+import nextapp.echo2.webrender.WebRenderServlet;
 import nextapp.echo2.webrender.servermessage.DomUpdate;
+import nextapp.echo2.webrender.service.JavaScriptService;
 
 /**
  * <code>ComponentSynchronizePeer</code> implementation for 
@@ -50,7 +56,17 @@ import nextapp.echo2.webrender.servermessage.DomUpdate;
  */
 public class ChartDisplayPeer 
 implements ComponentSynchronizePeer, DomUpdateSupport {
+ 
+    /**
+     * Service to provide supporting JavaScript library.
+     */
+    private static final Service CHART_DISPLAY_SERVICE = JavaScriptService.forResource("Echo2Chart.ChartDisplay", 
+            "/nextapp/echo2/chart/webcontainer/resource/js/ChartDisplay.js");
     
+    static {
+        WebRenderServlet.getServiceRegistry().add(CHART_DISPLAY_SERVICE);
+    }
+
     /**
      * <code>RenderState</code> implementation (stores generated image 
      * to be rendered).
@@ -61,6 +77,38 @@ implements ComponentSynchronizePeer, DomUpdateSupport {
         private int version;
     }
     
+    private PartialUpdateManager partialUpdateManager;
+    
+    /**
+     * <code>PartialUpdateParticipant</code> to handle updates to chart requiring graphic image to be updated.
+     */
+    private PartialUpdateParticipant chartContentChangedUpdateParticipant = new PartialUpdateParticipant() {
+
+        /**
+         * @see nextapp.echo2.webcontainer.PartialUpdateParticipant#renderProperty(nextapp.echo2.webcontainer.RenderContext,
+         *      nextapp.echo2.app.update.ServerComponentUpdate)
+         */
+        public void renderProperty(RenderContext rc, ServerComponentUpdate update) {
+            renderSetImageDirective(rc, (ChartDisplay) update.getParent());
+        }
+
+        /**
+         * @see nextapp.echo2.webcontainer.PartialUpdateParticipant#canRenderProperty(nextapp.echo2.webcontainer.RenderContext,
+         *      nextapp.echo2.app.update.ServerComponentUpdate)
+         */
+        public boolean canRenderProperty(RenderContext rc, ServerComponentUpdate update) {
+            return true;
+        }
+    };
+    
+    /**
+     * Default constructor.
+     */
+    public ChartDisplayPeer() {
+        partialUpdateManager = new PartialUpdateManager();
+        partialUpdateManager.add(ChartDisplay.CHART_CONTENT_CHANGED_PROPERTY, chartContentChangedUpdateParticipant);
+    }
+
     /**
      * @see nextapp.echo2.webcontainer.ComponentSynchronizePeer#getContainerId(nextapp.echo2.app.Component)
      */
@@ -100,6 +148,18 @@ implements ComponentSynchronizePeer, DomUpdateSupport {
         Element divElement = document.createElement("div");
         divElement.setAttribute("id", elementId);
         
+        if (chartDisplay.getChart() != null) {
+            int version = incrementImageVersion(rc, chartDisplay);
+            Element imgElement = document.createElement("img");
+            imgElement.setAttribute("id", elementId + "_image");
+            imgElement.setAttribute("src", ChartImageService.getUri(rc, chartDisplay, version));
+            divElement.appendChild(imgElement);
+        }
+
+        parentNode.appendChild(divElement);
+    }
+    
+    private int incrementImageVersion(RenderContext rc, ChartDisplay chartDisplay) {
         ChartRenderState renderState = (ChartRenderState) rc.getContainerInstance().getRenderState(chartDisplay);
         if (renderState == null) {
             renderState = new ChartRenderState();
@@ -107,14 +167,23 @@ implements ComponentSynchronizePeer, DomUpdateSupport {
         } else {
             ++renderState.version;
         }
-
-        if (chartDisplay.getChart() != null) {
-            Element imgElement = document.createElement("img");
-            imgElement.setAttribute("src", ChartImageService.getUri(rc, chartDisplay, renderState.version));
-            divElement.appendChild(imgElement);
-        }
-
-        parentNode.appendChild(divElement);
+        return renderState.version;
+    }
+    
+    /**
+     * Renders a 'set-image' directive to update the displayed chart on the 
+     * client.
+     * 
+     * @param rc the relevant <code>RenderContext</code>
+     * @param chartDisplay the <code>ChartDisplay</code> to update
+     */
+    private void renderSetImageDirective(RenderContext rc, ChartDisplay chartDisplay) {
+        rc.getServerMessage().addLibrary(CHART_DISPLAY_SERVICE.getId());
+        int version = incrementImageVersion(rc, chartDisplay);
+        Element setImageElement = rc.getServerMessage().appendPartDirective(ServerMessage.GROUP_ID_POSTUPDATE, 
+                "Echo2Chart.MessageProcessor", "set-image");
+        setImageElement.setAttribute("eid", ContainerInstance.getElementId(chartDisplay));
+        setImageElement.setAttribute("new-image", ChartImageService.getUri(rc, chartDisplay, version));
     }
 
     /**
@@ -122,8 +191,13 @@ implements ComponentSynchronizePeer, DomUpdateSupport {
      *      nextapp.echo2.app.update.ServerComponentUpdate, java.lang.String)
      */
     public boolean renderUpdate(RenderContext rc, ServerComponentUpdate update, String targetId) {
-        DomUpdate.renderElementRemove(rc.getServerMessage(), ContainerInstance.getElementId(update.getParent()));
-        renderAdd(rc, update, targetId, update.getParent());
+        // Determine if fully replacing the component is required.
+        if (partialUpdateManager.canProcess(rc, update)) {
+            partialUpdateManager.process(rc, update);
+        } else {
+            DomUpdate.renderElementRemove(rc.getServerMessage(), ContainerInstance.getElementId(update.getParent()));
+            renderAdd(rc, update, targetId, update.getParent());
+        }
         return true;
     }
 }
