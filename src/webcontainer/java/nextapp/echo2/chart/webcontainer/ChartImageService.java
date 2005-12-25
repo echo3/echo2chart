@@ -31,6 +31,7 @@ package nextapp.echo2.chart.webcontainer;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.io.OutputStream;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -106,27 +107,34 @@ implements Service {
      * @see nextapp.echo2.webrender.Service#service(nextapp.echo2.webrender.Connection)
      */
     public void service(Connection conn) throws IOException {
-        ContainerInstance containerInstance = (ContainerInstance) conn.getUserInstance();
-        HttpServletRequest request = conn.getRequest();
-        String chartId = request.getParameter("chartId");
-        ChartDisplay chartDisplay = (ChartDisplay) containerInstance.getApplicationInstance().getComponentByRenderId(chartId);
-        synchronized (chartDisplay) {
-            if (chartDisplay == null || !chartDisplay.isRenderVisible()) {
-                throw new IllegalArgumentException("Invalid chart id.");
+        try {
+            ContainerInstance containerInstance = (ContainerInstance) conn.getUserInstance();
+            HttpServletRequest request = conn.getRequest();
+            String chartId = request.getParameter("chartId");
+            ChartDisplay chartDisplay = (ChartDisplay) containerInstance.getApplicationInstance().getComponentByRenderId(chartId);
+            synchronized (chartDisplay) {
+                if (chartDisplay == null || !chartDisplay.isRenderVisible()) {
+                    throw new IllegalArgumentException("Invalid chart id.");
+                }
+                
+                int width = ExtentRender.toPixels((Extent) chartDisplay.getRenderProperty(ChartDisplay.PROPERTY_WIDTH), 
+                        DEFAULT_WIDTH);
+                int height = ExtentRender.toPixels((Extent) chartDisplay.getRenderProperty(ChartDisplay.PROPERTY_HEIGHT), 
+                        DEFAULT_HEIGHT);
+                JFreeChart chart =  chartDisplay.getChart();
+                BufferedImage image;
+                synchronized (chart) {
+                    image = chart.createBufferedImage(width, height);
+                }
+                PngEncoder encoder = new PngEncoder(image, true, null, 3);
+                conn.setContentType(ContentType.IMAGE_PNG);
+                OutputStream out = conn.getOutputStream();
+                encoder.encode(out);
             }
-            
-            int width = ExtentRender.toPixels((Extent) chartDisplay.getRenderProperty(ChartDisplay.PROPERTY_WIDTH), 
-                    DEFAULT_WIDTH);
-            int height = ExtentRender.toPixels((Extent) chartDisplay.getRenderProperty(ChartDisplay.PROPERTY_HEIGHT), 
-                    DEFAULT_HEIGHT);
-            JFreeChart chart =  chartDisplay.getChart();
-            BufferedImage image;
-            synchronized (chart) {
-                image = chart.createBufferedImage(width, height);
-            }
-            PngEncoder encoder = new PngEncoder(image, true, null, 3);
-            conn.setContentType(ContentType.IMAGE_PNG);
-            encoder.encode(conn.getOutputStream());
+        } catch (IOException ex) {
+            // Internet Explorer appears to enjoy making half-hearted requests for images, wherein it resets the connection
+            // leaving us with an IOException.  This exception is silently eaten.
+            ex.printStackTrace();
         }
     }
 }
