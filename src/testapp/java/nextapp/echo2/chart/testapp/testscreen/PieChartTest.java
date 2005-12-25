@@ -66,31 +66,41 @@ public class PieChartTest extends SplitPane {
         
         controlsColumn.addButton("Set Width = 800px", new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                chartDisplay.setWidth(new Extent(800));
+                synchronized(chartDisplay) {
+                    chartDisplay.setWidth(new Extent(800));
+                }
             }
         });
         
         controlsColumn.addButton("Set Width = null", new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                chartDisplay.setWidth(null);
+                synchronized(chartDisplay) {
+                    chartDisplay.setWidth(null);
+                }
             }
         });
         
         controlsColumn.addButton("Set Height = 600px", new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                chartDisplay.setHeight(new Extent(600));
+                synchronized(chartDisplay) {
+                    chartDisplay.setHeight(new Extent(600));
+                }
             }
         });
         
         controlsColumn.addButton("Set Height = null", new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                chartDisplay.setHeight(null);
+                synchronized(chartDisplay) {
+                    chartDisplay.setHeight(null);
+                }
             }
         });
         
         controlsColumn.addButton("Update a Value", new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                pieDataset.setValue("Cubits", Math.random() * 500);
+                synchronized(chartDisplay) {
+                    pieDataset.setValue("Cubits", Math.random() * 500);
+                }
             }
         });
     }

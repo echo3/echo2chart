@@ -142,21 +142,23 @@ implements ComponentSynchronizePeer, DomUpdateSupport {
      */
     public void renderHtml(RenderContext rc, ServerComponentUpdate update, Node parentNode, Component component) {
         ChartDisplay chartDisplay = (ChartDisplay) component;
-        Document document = rc.getServerMessage().getDocument();
-        String elementId = ContainerInstance.getElementId(chartDisplay);
-        
-        Element divElement = document.createElement("div");
-        divElement.setAttribute("id", elementId);
-        
-        if (chartDisplay.getChart() != null) {
-            int version = incrementImageVersion(rc, chartDisplay);
-            Element imgElement = document.createElement("img");
-            imgElement.setAttribute("id", elementId + "_image");
-            imgElement.setAttribute("src", ChartImageService.getUri(rc, chartDisplay, version));
-            divElement.appendChild(imgElement);
+        synchronized (chartDisplay) {
+            Document document = rc.getServerMessage().getDocument();
+            String elementId = ContainerInstance.getElementId(chartDisplay);
+            
+            Element divElement = document.createElement("div");
+            divElement.setAttribute("id", elementId);
+            
+            if (chartDisplay.getChart() != null) {
+                int version = incrementImageVersion(rc, chartDisplay);
+                Element imgElement = document.createElement("img");
+                imgElement.setAttribute("id", elementId + "_image");
+                imgElement.setAttribute("src", ChartImageService.getUri(rc, chartDisplay, version));
+                divElement.appendChild(imgElement);
+            }
+    
+            parentNode.appendChild(divElement);
         }
-
-        parentNode.appendChild(divElement);
     }
     
     private int incrementImageVersion(RenderContext rc, ChartDisplay chartDisplay) {

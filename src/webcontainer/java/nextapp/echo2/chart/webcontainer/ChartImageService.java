@@ -99,8 +99,7 @@ implements Service {
      * @see nextapp.echo2.webrender.Service#getVersion()
      */
     public int getVersion() {
-        // Cache-able by unique URI.
-        return 0;
+        return DO_NOT_CACHE;
     }
 
     /**
@@ -111,16 +110,23 @@ implements Service {
         HttpServletRequest request = conn.getRequest();
         String chartId = request.getParameter("chartId");
         ChartDisplay chartDisplay = (ChartDisplay) containerInstance.getApplicationInstance().getComponentByRenderId(chartId);
-        if (chartDisplay == null || !chartDisplay.isRenderVisible()) {
-            throw new IllegalArgumentException("Invalid chart id.");
+        synchronized (chartDisplay) {
+            if (chartDisplay == null || !chartDisplay.isRenderVisible()) {
+                throw new IllegalArgumentException("Invalid chart id.");
+            }
+            
+            int width = ExtentRender.toPixels((Extent) chartDisplay.getRenderProperty(ChartDisplay.PROPERTY_WIDTH), 
+                    DEFAULT_WIDTH);
+            int height = ExtentRender.toPixels((Extent) chartDisplay.getRenderProperty(ChartDisplay.PROPERTY_HEIGHT), 
+                    DEFAULT_HEIGHT);
+            JFreeChart chart =  chartDisplay.getChart();
+            BufferedImage image;
+            synchronized (chart) {
+                image = chart.createBufferedImage(width, height);
+            }
+            PngEncoder encoder = new PngEncoder(image, true, null, 3);
+            conn.setContentType(ContentType.IMAGE_PNG);
+            encoder.encode(conn.getOutputStream());
         }
-        
-        int width = ExtentRender.toPixels((Extent) chartDisplay.getRenderProperty(ChartDisplay.PROPERTY_WIDTH), DEFAULT_WIDTH);
-        int height = ExtentRender.toPixels((Extent) chartDisplay.getRenderProperty(ChartDisplay.PROPERTY_HEIGHT), DEFAULT_HEIGHT);
-        JFreeChart chart =  chartDisplay.getChart();
-        BufferedImage image = chart.createBufferedImage(width, height);
-        PngEncoder encoder = new PngEncoder(image, true, null, 3);
-        conn.setContentType(ContentType.IMAGE_PNG);
-        encoder.encode(conn.getOutputStream());
     }
 }
