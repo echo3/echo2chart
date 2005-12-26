@@ -35,6 +35,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
 import nextapp.echo2.app.Component;
+import nextapp.echo2.app.Extent;
 import nextapp.echo2.app.update.ServerComponentUpdate;
 import nextapp.echo2.chart.app.ChartDisplay;
 import nextapp.echo2.webcontainer.ComponentSynchronizePeer;
@@ -44,6 +45,7 @@ import nextapp.echo2.webcontainer.PartialUpdateManager;
 import nextapp.echo2.webcontainer.PartialUpdateParticipant;
 import nextapp.echo2.webcontainer.RenderContext;
 import nextapp.echo2.webcontainer.RenderState;
+import nextapp.echo2.webcontainer.propertyrender.ExtentRender;
 import nextapp.echo2.webrender.ServerMessage;
 import nextapp.echo2.webrender.Service;
 import nextapp.echo2.webrender.WebRenderServlet;
@@ -56,6 +58,9 @@ import nextapp.echo2.webrender.service.JavaScriptService;
  */
 public class ChartDisplayPeer 
 implements ComponentSynchronizePeer, DomUpdateSupport {
+
+    protected static final int DEFAULT_WIDTH = 400;
+    protected static final int DEFAULT_HEIGHT = 300;
  
     /**
      * Service to provide supporting JavaScript library.
@@ -150,10 +155,15 @@ implements ComponentSynchronizePeer, DomUpdateSupport {
             divElement.setAttribute("id", elementId);
             
             if (chartDisplay.getChart() != null) {
+                int width = ExtentRender.toPixels((Extent) chartDisplay.getRenderProperty(ChartDisplay.PROPERTY_WIDTH), 
+                        DEFAULT_WIDTH);
+                int height = ExtentRender.toPixels((Extent) chartDisplay.getRenderProperty(ChartDisplay.PROPERTY_HEIGHT), 
+                        DEFAULT_HEIGHT);
                 int version = incrementImageVersion(rc, chartDisplay);
                 Element imgElement = document.createElement("img");
                 imgElement.setAttribute("id", elementId + "_image");
                 imgElement.setAttribute("src", ChartImageService.getUri(rc, chartDisplay, version));
+                imgElement.setAttribute("style", "width:" + width + "px;height:" + height + "px;");
                 divElement.appendChild(imgElement);
             }
     

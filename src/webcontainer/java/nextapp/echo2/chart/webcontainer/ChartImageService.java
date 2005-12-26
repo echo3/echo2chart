@@ -53,9 +53,6 @@ import nextapp.echo2.webrender.WebRenderServlet;
  */
 public class ChartImageService 
 implements Service {
-
-    private static final int DEFAULT_WIDTH = 400;
-    private static final int DEFAULT_HEIGHT = 300;
     
     /**
      * Parameter keys used in generating service URI.
@@ -118,9 +115,9 @@ implements Service {
                 }
                 
                 int width = ExtentRender.toPixels((Extent) chartDisplay.getRenderProperty(ChartDisplay.PROPERTY_WIDTH), 
-                        DEFAULT_WIDTH);
+                        ChartDisplayPeer.DEFAULT_WIDTH);
                 int height = ExtentRender.toPixels((Extent) chartDisplay.getRenderProperty(ChartDisplay.PROPERTY_HEIGHT), 
-                        DEFAULT_HEIGHT);
+                        ChartDisplayPeer.DEFAULT_HEIGHT);
                 JFreeChart chart =  chartDisplay.getChart();
                 BufferedImage image;
                 synchronized (chart) {
