@@ -51,10 +51,8 @@ Echo2Chart.MessageProcessor = function() { };
 Echo2Chart.MessageProcessor.process = function(messagePartElement) {
     for (var i = 0; i < messagePartElement.childNodes.length; ++i) {
         if (messagePartElement.childNodes[i].nodeType == 1) {
-            switch (messagePartElement.childNodes[i].tagName) {
-            case "set-image":
+            if (messagePartElement.childNodes[i].tagName == "set-image") {
                 Echo2Chart.MessageProcessor.processSetImage(messagePartElement.childNodes[i]);
-                break;
             }
         }
     }

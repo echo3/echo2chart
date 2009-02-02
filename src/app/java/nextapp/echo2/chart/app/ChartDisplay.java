@@ -123,7 +123,7 @@ public class ChartDisplay extends Component {
     /**
      * Sets the displayed <code>JFreeChart</code>.
      * 
-     * param newValue the new <code>JFreeChart</code> to display 
+     * @param newValue the new <code>JFreeChart</code> to display 
      */
     public void setChart(JFreeChart newValue) {
         JFreeChart oldValue = chart;
