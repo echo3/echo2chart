@@ -235,7 +235,7 @@
     <target name="doc" 
             depends="doc.app, doc.app.private, doc.webcontainer, doc.webcontainer.private"/>
 	
-    <target name="release" depends="clean, dist, doc.public">
+    <target name="release" depends="clean, dist, dist.testapp, doc.public">
         <mkdir dir="${dir.build.release.root}"/>
         <mkdir dir="${dir.build.release.root}/SourceCode"/>
    		<mkdir dir="${dir.build.release.root}/SourceCode/src"/>
@@ -268,6 +268,11 @@
             <fileset dir="${dir.dist.lib}"/>
         </copy>
         
+        <!-- Binary Applications -->
+        <copy todir="${dir.build.release.root}/BinaryApplications">
+            <fileset file="${dir.dist.testapp}/${warfile.testapp}"/>
+        </copy>
+       
         <!-- Documentation -->
         <copy todir="${dir.build.release.root}/Documentation/api/public">
             <fileset dir="${dir.javadoc.public}"/>
