@@ -2,7 +2,7 @@
 Echo2Chart
 Copyright (C) 2002-2009 NextApp, Inc.
 
-http://www.nextapp.com/products/echo2
+http://echo.nextapp.com
 
 ----------------------------------------------------------------------
 Echo2Chart is licensed under the Mozilla Public License.
