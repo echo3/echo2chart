@@ -1,6 +1,6 @@
 ----------------------------------------------------------------------
 Echo2Chart
-Copyright (C) 2002-2005 NextApp, Inc.
+Copyright (C) 2002-2009 NextApp, Inc.
 
 http://www.nextapp.com/products/echo2
 
