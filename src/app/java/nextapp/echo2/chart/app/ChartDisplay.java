@@ -1,6 +1,6 @@
 /* 
  * This file is part of the Echo2 Chart Library.
- * Copyright (C) 2005 NextApp, Inc.
+ * Copyright (C) 2005-2009 NextApp, Inc.
  * 
  * Version: MPL 1.1/GPL 2.0/LGPL 2.1
  *
